@@ -60,18 +60,43 @@ module OmniAuth
         hash = {}
         hash[:id_token] = access_token['id_token']
         if !options[:skip_jwt] && !access_token['id_token'].nil?
-          hash[:id_info] = ::JWT.decode(
-            access_token['id_token'], nil, false, verify_iss: options.verify_iss,
-                                                  iss: 'https://accounts.google.com',
-                                                  verify_aud: true,
-                                                  aud: options.client_id,
-                                                  verify_sub: false,
-                                                  verify_expiration: true,
-                                                  verify_not_before: true,
-                                                  verify_iat: true,
-                                                  verify_jti: false,
-                                                  leeway: options[:jwt_leeway]
-          ).first
+          is_verified = false
+          # Round 1
+          begin
+            hash[:id_info] = ::JWT.decode(
+              access_token['id_token'], nil, false, verify_iss: options.verify_iss,
+                                                    iss: 'https://accounts.google.com',
+                                                    verify_aud: true,
+                                                    aud: options.client_id,
+                                                    verify_sub: false,
+                                                    verify_expiration: true,
+                                                    verify_not_before: true,
+                                                    verify_iat: true,
+                                                    verify_jti: false,
+                                                    leeway: options[:jwt_leeway]
+            ).first
+            is_verified = true
+          rescue StandardError
+            # Do something since Rubocop does not favour empty rescue block
+            is_verified = false
+          end
+
+          # Round 2
+          unless is_verified
+            hash[:id_info] = ::JWT.decode(
+              access_token['id_token'], nil, false, verify_iss: options.verify_iss,
+                                                    iss: 'accounts.google.com',
+                                                    verify_aud: true,
+                                                    aud: options.client_id,
+                                                    verify_sub: false,
+                                                    verify_expiration: true,
+                                                    verify_not_before: true,
+                                                    verify_iat: true,
+                                                    verify_jti: false,
+                                                    leeway: options[:jwt_leeway]
+            ).first
+          end
+
         end
         hash[:raw_info] = raw_info unless skip_info?
         prune! hash

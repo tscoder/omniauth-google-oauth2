@@ -6,6 +6,8 @@ Metrics/AbcSize:
   Enabled: false
 Metrics/BlockLength:
   ExcludedMethods: ['describe', 'context']
+  Exclude:
+    - 'lib/omniauth/strategies/google_oauth2.rb'
 Metrics/CyclomaticComplexity:
   Enabled: false
 Metrics/LineLength:
